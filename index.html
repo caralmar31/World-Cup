@@ -275,7 +275,7 @@
   </div>
 
   <div class="scores-bar" id="scoresBar">
-    <span style="font-size:11.5px;color:#C9D2EE"><span class="live-dot"></span>Live scores active</span>
+    <span style="font-size:11.5px;color:#C9D2EE"><span class="live-dot"></span>Match results</span>
     <button id="refreshBtn" onclick="fetchLiveScores()">&#8635; Refresh</button>
     <span id="lastUpdated" style="font-size:10.5px;color:var(--muted)"></span>
   </div>
@@ -895,41 +895,28 @@ const TEAM_CONF = {"Czech Republic": "UEFA", "Bosnia & H.": "UEFA", "Switzerland
 const CONF_DISPLAY = {"UEFA": "Europe (UEFA)", "CONMEBOL": "South America (CONMEBOL)", "CONCACAF": "North/Central America (CONCACAF)", "CAF": "Africa (CAF)", "AFC": "Asia/Oceania (AFC)"};
 
 
-/* ===================== LIVE SCORES (added safely, self-contained) ===================== */
+/* ===================== LIVE SCORES (openfootball — free, no key, CORS-enabled) ===================== */
 var WC_LIVE = {
-  api: "https://worldcup26.ir/get",
+  // GitHub raw is CORS-enabled and needs no API key. Updated ~daily during the tournament.
+  url: "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json",
   scores: {},      // "Home|Away" -> {home, away, status}
-  standings: {},   // "A" -> rows
-  teamIdMap: {},   // id -> normalized name
   active: false
 };
 
+// Map openfootball team names -> names used on this site
 var WC_NAME_MAP = {
-  "Korea Republic":"South Korea","Republic of Korea":"South Korea",
-  "Czechia":"Czech Republic",
-  "Bosnia and Herzegovina":"Bosnia & H.","Bosnia & Herzegovina":"Bosnia & H.",
-  "Cote d'Ivoire":"Ivory Coast",
-  "Curacao":"Cura\u00e7ao",
-  "Congo DR":"DR Congo","Democratic Republic of the Congo":"DR Congo",
-  "United States":"USA","United States of America":"USA",
-  "T\u00fcrkiye":"Turkey",
-  "Islamic Republic of Iran":"Iran"
+  "Bosnia & Herzegovina": "Bosnia & H.",
+  "Korea Republic": "South Korea",
+  "Republic of Korea": "South Korea",
+  "Czechia": "Czech Republic",
+  "Cote d'Ivoire": "Ivory Coast",
+  "Côte d'Ivoire": "Ivory Coast",
+  "IR Iran": "Iran",
+  "Congo DR": "DR Congo"
 };
 function wcNorm(n){ return WC_NAME_MAP[n] || n; }
 
-function wcStatus(s){
-  if(!s) return null;
-  var u = String(s).toUpperCase().trim();
-  // worldcup26.ir exact values: "notstarted", "1H", "HT", "2H", "FT"
-  if(u === "HT") return "HT";
-  if(u === "NOTSTARTED" || u === "SCHEDULED") return null;
-  if(["1H","2H","ET","ET1","ET2","LIVE","IN_PLAY","INPLAY","EXTRA_TIME"].some(function(x){return u===x||u.indexOf(x)!==-1;})) return "LIVE";
-  if(["FT","AET","FINISHED","FULL_TIME","FULL","COMPLETED"].some(function(x){return u===x||u.indexOf(x)!==-1;})) return "FT";
-  return null;
-}
-
 var WC_DEBUG = (typeof location !== "undefined" && location.hash && location.hash.indexOf("debug") !== -1);
-
 function wcDebugLog(label, data){
   if(!WC_DEBUG) return;
   var panel = document.getElementById("wcDebugPanel");
@@ -946,101 +933,45 @@ function fetchLiveScores(){
   if(typeof fetch !== "function") return;
   wcDebugLog("fetchLiveScores called at", new Date().toLocaleTimeString());
 
-  // Step 1: fetch teams to build ID→name map, then fetch games
-  fetch(WC_LIVE.api + "/teams")
-    .then(function(r){ return r.ok ? r.json() : []; })
-    .then(function(teamsData){
-      // Build id→normalized-name map
-      var idMap = {};
-      var list = Array.isArray(teamsData) ? teamsData : (teamsData.teams || teamsData.data || []);
-      list.forEach(function(t){
-        var id = String(t.id || t._id || "");
-        var name = wcNorm(t.name_en || t.name || t.english_name || "");
-        if(id && name) idMap[id] = name;
-      });
-      WC_LIVE.teamIdMap = idMap;
-      wcDebugLog("Teams loaded (count)", Object.keys(idMap).length + " teams. Sample: " + JSON.stringify(Object.entries(idMap).slice(0,3)));
-
-      // Step 2: fetch games using the id map
-      return fetch(WC_LIVE.api + "/games");
-    })
-    .then(function(r){ return r.ok ? r.json() : []; })
-    .then(function(games){
-      var idMap = WC_LIVE.teamIdMap || {};
-      var list = Array.isArray(games) ? games : (games.games || games.matches || games.data || []);
-      wcDebugLog("Games loaded (count)", list.length + " games");
-      if(list.length > 0) wcDebugLog("First game raw", list[0]);
+  fetch(WC_LIVE.url, { cache: "no-store" })
+    .then(function(r){ if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function(data){
+      var matches = (data && data.matches) ? data.matches : [];
+      wcDebugLog("Matches loaded", matches.length + " total");
       WC_LIVE.scores = {};
       var any = false;
+      var played = 0;
 
-      list.forEach(function(m){
-        // worldcup26.ir uses home_team_id / away_team_id (numeric strings)
-        var htId = String(m.home_team_id || "");
-        var atId = String(m.away_team_id || "");
-        var ht = idMap[htId] || wcNorm(m.home_team || m.homeTeam || m.home || "");
-        var at = idMap[atId] || wcNorm(m.away_team || m.awayTeam || m.away || "");
+      matches.forEach(function(m){
+        if(!m.score || !m.score.ft) return;          // only matches that have a score
+        var ht = wcNorm(m.team1 || "");
+        var at = wcNorm(m.team2 || "");
+        var ft = m.score.ft;                          // [home, away] full-time
+        if(!ht || !at || !Array.isArray(ft) || ft.length < 2) return;
 
-        // Scores: stored as strings "0", "1" etc in this API
-        var hs = m.home_score != null ? parseInt(m.home_score, 10) : null;
-        var as = m.away_score != null ? parseInt(m.away_score, 10) : null;
-
-        // Status: "notstarted", "1H", "HT", "2H", "FT", finished="TRUE"
-        var rawStatus = m.time_elapsed || m.status || m.state || m.match_status || "";
-        if(m.finished === "TRUE" || m.finished === true) rawStatus = "FT";
-        var st = wcStatus(rawStatus);
-
-        if(ht && at && st && hs != null){
-          WC_LIVE.scores[ht + "|" + at] = { home: hs, away: (as != null ? as : 0), status: st };
-          any = true;
-        }
+        // openfootball marks final scores; treat any present score as FT
+        // (the maintainer enters the final result after the match ends)
+        WC_LIVE.scores[ht + "|" + at] = { home: ft[0], away: ft[1], status: "FT" };
+        any = true; played++;
       });
 
-      wcDebugLog("Matched scores", WC_LIVE.scores);
+      wcDebugLog("Matches with scores", played);
       if(any){
         WC_LIVE.active = true;
         var bar = document.getElementById("scoresBar");
         if(bar) bar.classList.add("on");
       } else {
-        wcDebugLog("No live/finished matches found", "All games may be 'notstarted' or score data not yet published by API");
+        wcDebugLog("No scores yet", "Data source updates ~once daily. Final scores appear after the maintainer enters them.");
       }
       wcApplyScores();
+
       var lu = document.getElementById("lastUpdated");
       if(lu) lu.textContent = "Updated " + new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
     })
-    .catch(function(err){ wcDebugLog("FETCH ERROR (games/teams)", String(err) + " — likely CORS or network block"); });
-
-  // Fetch group standings separately
-  fetch(WC_LIVE.api + "/groups")
-    .then(function(r){ return r.ok ? r.json() : []; })
-    .then(function(gj){
-      var idMap = WC_LIVE.teamIdMap || {};
-      var gl = Array.isArray(gj) ? gj : (gj.groups || gj.data || []);
-      WC_LIVE.standings = {};
-      gl.forEach(function(g){
-        var letter = String(g.name || g.group || "").replace("Group ","").trim().toUpperCase();
-        var rows = g.standings || g.teams || [];
-        if(letter && rows.length){
-          WC_LIVE.standings[letter] = rows.map(function(t){
-            var tid = String(t.team_id || t.id || "");
-            var name = idMap[tid] || wcNorm(t.team || t.name || t.team_name || "");
-            return {
-              team: name,
-              played: t.played || t.mp || t.games_played || 0,
-              won: t.won || t.w || 0,
-              drawn: t.drawn || t.d || 0,
-              lost: t.lost || t.l || 0,
-              pts: t.points || t.pts || 0
-            };
-          });
-        }
-      });
-      wcRenderStandings();
-    })
-    .catch(function(err){ /* standings unavailable */ });
+    .catch(function(err){ wcDebugLog("FETCH ERROR", String(err)); });
 }
 
 function wcApplyScores(){
-  // Remove old badges/pills
   document.querySelectorAll(".score-badge, .score-pill-wrap").forEach(function(el){ el.remove(); });
 
   Object.keys(WC_LIVE.scores).forEach(function(key){
@@ -1051,11 +982,10 @@ function wcApplyScores(){
       var names = Array.prototype.map.call(card.querySelectorAll(".nm"), function(n){ return n.textContent.trim().toUpperCase(); });
       if(names.indexOf(ht) !== -1 && names.indexOf(at) !== -1){
         var badge = document.createElement("div");
-        badge.className = "score-badge " + (d.status === "LIVE" ? "live" : d.status === "HT" ? "ht" : "ft");
-        badge.textContent = d.status;
+        badge.className = "score-badge ft";
+        badge.textContent = "FT";
         card.appendChild(badge);
 
-        // Put the score in the strip as a pill
         var strip = card.querySelector(".strip");
         if(strip && !strip.querySelector(".score-pill")){
           var wrap = document.createElement("span");
@@ -1071,49 +1001,21 @@ function wcApplyScores(){
   });
 }
 
-function wcRenderStandings(){
-  var wrap = document.getElementById("standingsWrap");
-  var grid = document.getElementById("standingsGrid");
-  if(!wrap || !grid) return;
-  var keys = Object.keys(WC_LIVE.standings).sort();
-  if(!keys.length){ wrap.classList.add("hide"); return; }
-  wrap.classList.remove("hide");
-  grid.innerHTML = keys.map(function(g){
-    var rows = WC_LIVE.standings[g];
-    var rowsHtml = rows.map(function(r, i){
-      var cls = i < 2 ? "qualified" : (i === 2 ? "playoff" : "");
-      return '<div class="standings-row ' + cls + '">' +
-        '<span class="standings-pos">' + (i+1) + '</span>' +
-        '<span class="standings-team">' + r.team + '</span>' +
-        '<span class="standings-num">' + r.played + '</span>' +
-        '<span class="standings-num">' + r.won + '</span>' +
-        '<span class="standings-num">' + r.drawn + '</span>' +
-        '<span class="standings-num">' + r.lost + '</span>' +
-        '<span class="standings-pts">' + r.pts + '</span></div>';
-    }).join("");
-    return '<div class="standings-table">' +
-      '<div class="standings-group-label">Group ' + g + '</div>' +
-      '<div class="standings-table-head"><span>#</span><span>Team</span><span>P</span><span>W</span><span>D</span><span>L</span><span>Pts</span></div>' +
-      rowsHtml + '</div>';
-  }).join("");
-}
-
-// Re-apply scores after any re-render (hook into the buttons rather than overriding render)
+// Re-apply scores when the user switches views
 document.addEventListener("click", function(e){
-  if(e.target && (e.target.id === "btnGroup" || e.target.id === "btnDate")){
+  if(e.target && (e.target.id === "btnGroup" || e.target.id === "btnDate" || e.target.id === "btnConf")){
     if(WC_LIVE.active) setTimeout(wcApplyScores, 80);
   }
 });
 var _teamSel = document.getElementById("teamFilter");
 if(_teamSel){ _teamSel.addEventListener("change", function(){ if(WC_LIVE.active) setTimeout(wcApplyScores, 80); }); }
 
-// Initial fetch + poll every 90s only during the tournament window
-// Guarded so live scores can NEVER break the core site
+// Initial fetch + refresh every 5 minutes during the tournament window
 try{
   if(typeof fetch === "function"){
     fetchLiveScores();
     var _wcNow = new Date(), _wcS = new Date("2026-06-11"), _wcE = new Date("2026-07-20");
-    if(_wcNow >= _wcS && _wcNow <= _wcE){ setInterval(fetchLiveScores, 90000); }
+    if(_wcNow >= _wcS && _wcNow <= _wcE){ setInterval(fetchLiveScores, 300000); }
   }
 }catch(e){ /* never let live scores break the site */ }
 
