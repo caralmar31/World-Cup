@@ -327,9 +327,13 @@ const flagCodes = {
 };
 function flagImg(name, size=48){
   const code = flagCodes[name];
-  if(!code) return '';
+  if(!code) return "";
   const h = Math.round(size*0.75);
-  return '<img src=\'https://flagcdn.com/h'+size+'/'+code+'.png\' width=\''+size+'\' height=\''+h+'\' alt=\''+name+' flag\' style=\'border-radius:4px;display:block;margin:0 auto\'>';
+  const src = "https://flagcdn.com/h" + size + "/" + code + ".png";
+  const img = document.createElement("img");
+  img.src = src; img.width = size; img.height = h; img.alt = name + " flag";
+  img.style.cssText = "border-radius:4px;display:block;margin:0 auto";
+  return img.outerHTML;
 }
 const flags = {}; // kept for fallback compat — flagImg() is used instead
 const confs = {
