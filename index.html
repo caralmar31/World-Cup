@@ -588,6 +588,7 @@ function render(){
     toggle.style.opacity="1";toggle.style.pointerEvents="auto";
     title.innerHTML=`Group <span class="ac">Stage</span>`;
   }
+  if(typeof liveActive!=="undefined"&&liveActive) setTimeout(applyScoresToCards,50);
 }
 function setView(v){
   view=v;
@@ -927,13 +928,6 @@ function renderStandings(){
         </div>`).join("")}
     </div>`;
   }).join("");
-}
-
-// Re-apply scores whenever view is re-rendered
-const _origRender = render;
-function render(){
-  _origRender();
-  if(liveActive) setTimeout(applyScoresToCards, 50);
 }
 
 // Fetch on load, then every 90 seconds during a match window
