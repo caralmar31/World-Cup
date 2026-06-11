@@ -2,7 +2,7 @@
 
 A live-updating World Cup 2026 schedule with match details, head-to-head history, group standings, and real-time scores.
 
-**Live site:** https://YOUR-USERNAME.github.io/wc2026-schedule
+**Live site:** https://caralmar31.github.io/World-Cup
 
 ## Features
 - Full 104-match schedule (group stage + knockouts)
