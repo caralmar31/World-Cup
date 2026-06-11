@@ -226,6 +226,18 @@
   .squad-player-club{font-size:10.5px;color:#6B7491;white-space:nowrap;flex-shrink:0}
   @media(max-width:640px){.squad-wrap{grid-template-columns:1fr}}
 
+
+  /* ODDS */
+  .odds-row{display:flex;justify-content:center;gap:0;margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+  .odds-cell{flex:1;text-align:center;padding:10px 6px;background:rgba(255,255,255,.04)}
+  .odds-cell+.odds-cell{border-left:1px solid rgba(255,255,255,.07)}
+  .odds-cell.best{background:rgba(230,181,73,.12)}
+  .odds-val{font-size:18px;font-weight:800;color:#fff;line-height:1}
+  .odds-val.pos{color:#4ade80}
+  .odds-val.neg{color:#f87171}
+  .odds-lbl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+  .odds-note{text-align:center;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:.04em}
+
 </style>
 </head>
 <body>
@@ -257,6 +269,7 @@
       <div class="toggle" id="toggleWrap">
         <button id="btnGroup" class="active" onclick="setView('group')">By Group</button>
         <button id="btnDate" onclick="setView('date')">By Date</button>
+        <button id="btnConf" onclick="setView('conf')">By Conf</button>
       </div>
     </div>
   </div>
@@ -549,6 +562,32 @@ function renderGroupByGroup(){
   }
   return html;
 }
+function renderGroupByConf(){
+  var confOrder = ["UEFA","CONMEBOL","CONCACAF","CAF","AFC"];
+  var out = "";
+  confOrder.forEach(function(conf){
+    var seen = {}, matches = [];
+    Object.keys(groups).forEach(function(g){
+      groups[g].m.forEach(function(mt){
+        var key = mt.h+"|"+mt.a;
+        if(!seen[key] && (TEAM_CONF[mt.h]===conf || TEAM_CONF[mt.a]===conf)){
+          seen[key]=true; matches.push(mt);
+        }
+      });
+    });
+    if(!matches.length) return;
+    matches.sort(function(a,b){ return tkey(a)-tkey(b); });
+    out += '<div class="block">';
+    out += '<div class="block-head">';
+    out += '<span class="gtag">'+conf+'</span>';
+    out += '<span class="gteams">'+(CONF_DISPLAY[conf]||conf)+' · '+matches.length+' matches</span>';
+    out += '</div>';
+    out += '<div class="grid">'+matches.map(function(mt){ return cardHTML(mt,false); }).join("")+'</div>';
+    out += '</div>';
+  });
+  return out;
+}
+
 function renderGroupByDate(){
   const all=[];
   for(const g of Object.keys(groups)) groups[g].m.forEach(mt=>all.push({...mt,g}));
@@ -589,7 +628,7 @@ function render(){
     toggle.style.opacity=".4";toggle.style.pointerEvents="none";
     title.innerHTML=`${teamFilter} <span class="ac">Fixtures</span>`;
   }else{
-    document.getElementById("groupStage").innerHTML=view==="group"?renderGroupByGroup():renderGroupByDate();
+    document.getElementById("groupStage").innerHTML=view==="group"?renderGroupByGroup():view==="conf"?renderGroupByConf():renderGroupByDate();
     ko.classList.remove("hide");
     toggle.style.opacity="1";toggle.style.pointerEvents="auto";
     title.innerHTML=`Group <span class="ac">Stage</span>`;
@@ -599,6 +638,7 @@ function setView(v){
   view=v;
   document.getElementById("btnGroup").classList.toggle("active",v==="group");
   document.getElementById("btnDate").classList.toggle("active",v==="date");
+  document.getElementById("btnConf").classList.toggle("active",v==="conf");
   render();
 }
 function setTeam(t){teamFilter=t;render();}
@@ -759,6 +799,28 @@ function renderModalContent(d,mt){
   const fh=flagImg(mt.h,24), fa=flagImg(mt.a,24);
   const fhLg=flagImg(mt.h,40), faLg=flagImg(mt.a,40);
 
+  // Pre-tournament betting odds
+  var oddsHTML = "";
+  (function(){
+    var key = mt.h + "|" + mt.a;
+    var o = MATCH_ODDS && MATCH_ODDS[key];
+    if(!o) return;
+    var vals = o; // [home_ml, draw_ml, away_ml]
+    var labels = [mt.h, "Draw", mt.a];
+    // Find best (highest) value = biggest underdog = most interesting odds
+    var best = vals.indexOf(Math.max.apply(null, vals.map(function(v){return v;})));
+    var cells = vals.map(function(v,i){
+      var fmt = v > 0 ? "+" + v : String(v);
+      var cls = v > 0 ? "pos" : "neg";
+      var cellCls = i === best ? "odds-cell best" : "odds-cell";
+      return '<div class="' + cellCls + '"><div class="odds-val ' + cls + '">' + fmt +
+             '</div><div class="odds-lbl">' + labels[i] + '</div></div>';
+    }).join("");
+    oddsHTML = '<div class="modal-section"><div class="modal-section-title">Pre-Tournament Odds</div>' +
+      '<div class="odds-row">' + cells + '</div>' +
+      '<div class="odds-note">American odds &middot; Pre-tournament consensus &middot; For reference only</div></div>';
+  })();
+
   document.getElementById("modalBody").innerHTML=`
 
     <div class="modal-section">
@@ -779,6 +841,8 @@ function renderModalContent(d,mt){
       </div>
       <div class="ai-content" style="margin-top:12px"><p>${h2h.summary}</p></div>
     </div>
+
+    ${oddsHTML}
 
     <div class="modal-section">
       <div class="modal-section-title">${fhLg}</div>
@@ -825,6 +889,11 @@ function renderModalContent(d,mt){
     </div>
   `;
 }
+
+const MATCH_ODDS = {"Mexico|South Africa": [-280, 370, 650], "South Korea|Czech Republic": [-140, 260, 320], "Czech Republic|South Africa": [-200, 310, 450], "Mexico|South Korea": [-160, 280, 340], "South Africa|South Korea": [380, 290, -160], "Czech Republic|Mexico": [320, 290, -140], "Canada|Bosnia & H.": [-170, 300, 380], "Qatar|Switzerland": [380, 290, -160], "Switzerland|Bosnia & H.": [-190, 320, 420], "Canada|Qatar": [-320, 380, 650], "Switzerland|Canada": [-150, 270, 330], "Bosnia & H.|Qatar": [-180, 300, 420], "Brazil|Morocco": [-240, 350, 560], "Haiti|Scotland": [500, 320, -210], "Scotland|Morocco": [220, 270, -180], "Brazil|Haiti": [-900, 550, 1800], "Morocco|Haiti": [-380, 360, 800], "Scotland|Brazil": [480, 300, -200], "USA|Paraguay": [-200, 310, 450], "Australia|Turkey": [240, 270, -160], "USA|Australia": [-220, 320, 480], "Turkey|Paraguay": [-160, 280, 360], "Turkey|USA": [280, 290, -140], "Paraguay|Australia": [-130, 260, 310], "Germany|Curaçao": [-1800, 900, 3500], "Ivory Coast|Ecuador": [120, 250, 200], "Germany|Ivory Coast": [-260, 360, 580], "Ecuador|Curaçao": [-500, 400, 900], "Curaçao|Ivory Coast": [600, 380, -240], "Ecuador|Germany": [380, 300, -170], "Netherlands|Japan": [-200, 320, 450], "Sweden|Tunisia": [-220, 300, 480], "Netherlands|Sweden": [-180, 300, 420], "Tunisia|Japan": [260, 270, 150], "Tunisia|Netherlands": [450, 330, -200], "Japan|Sweden": [160, 260, 180], "Belgium|Egypt": [-300, 380, 650], "Iran|New Zealand": [-180, 290, 400], "Belgium|Iran": [-340, 380, 750], "New Zealand|Egypt": [240, 270, -160], "New Zealand|Belgium": [600, 380, -260], "Egypt|Iran": [180, 250, 160], "Spain|Cape Verde": [-900, 550, 1600], "Saudi Arabia|Uruguay": [220, 280, -160], "Spain|Saudi Arabia": [-500, 400, 900], "Uruguay|Cape Verde": [-380, 360, 750], "Cape Verde|Saudi Arabia": [300, 280, -180], "Uruguay|Spain": [380, 290, -170], "France|Senegal": [-260, 360, 580], "Iraq|Norway": [650, 400, -300], "France|Iraq": [-650, 450, 1100], "Norway|Senegal": [-150, 270, 340], "Norway|France": [280, 290, -150], "Senegal|Iraq": [-320, 360, 700], "Argentina|Algeria": [-600, 430, 1200], "Austria|Jordan": [-450, 380, 900], "Argentina|Austria": [-360, 370, 800], "Jordan|Algeria": [280, 270, 150], "Algeria|Austria": [200, 260, 140], "Jordan|Argentina": [1100, 550, -500], "Portugal|DR Congo": [-380, 370, 800], "Uzbekistan|Colombia": [380, 300, -200], "Portugal|Uzbekistan": [-700, 470, 1300], "Colombia|DR Congo": [-280, 360, 620], "Colombia|Portugal": [260, 280, -150], "DR Congo|Uzbekistan": [-160, 280, 380], "England|Croatia": [-200, 310, 450], "Ghana|Panama": [-180, 300, 420], "England|Ghana": [-300, 370, 650], "Panama|Croatia": [280, 280, -160], "Panama|England": [700, 450, -340], "Croatia|Ghana": [-190, 310, 440]};
+const TEAM_CONF = {"Czech Republic": "UEFA", "Bosnia & H.": "UEFA", "Switzerland": "UEFA", "Scotland": "UEFA", "Germany": "UEFA", "Netherlands": "UEFA", "Sweden": "UEFA", "Belgium": "UEFA", "Spain": "UEFA", "France": "UEFA", "Norway": "UEFA", "Austria": "UEFA", "Portugal": "UEFA", "England": "UEFA", "Croatia": "UEFA", "Turkey": "UEFA", "Brazil": "CONMEBOL", "Paraguay": "CONMEBOL", "Ecuador": "CONMEBOL", "Uruguay": "CONMEBOL", "Argentina": "CONMEBOL", "Colombia": "CONMEBOL", "Mexico": "CONCACAF", "Canada": "CONCACAF", "Haiti": "CONCACAF", "USA": "CONCACAF", "Curaçao": "CONCACAF", "Panama": "CONCACAF", "South Africa": "CAF", "Morocco": "CAF", "Tunisia": "CAF", "Egypt": "CAF", "Senegal": "CAF", "DR Congo": "CAF", "Ghana": "CAF", "Cape Verde": "CAF", "Ivory Coast": "CAF", "South Korea": "AFC", "Qatar": "AFC", "Australia": "AFC", "Japan": "AFC", "Iran": "AFC", "Iraq": "AFC", "Saudi Arabia": "AFC", "Jordan": "AFC", "Uzbekistan": "AFC", "New Zealand": "AFC"};
+const CONF_DISPLAY = {"UEFA": "Europe (UEFA)", "CONMEBOL": "South America (CONMEBOL)", "CONCACAF": "North/Central America (CONCACAF)", "CAF": "Africa (CAF)", "AFC": "Asia/Oceania (AFC)"};
+
 
 /* ===================== LIVE SCORES (added safely, self-contained) ===================== */
 var WC_LIVE = {
