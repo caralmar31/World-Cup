@@ -173,6 +173,8 @@
   @keyframes pulsebadge{0%,100%{opacity:1}50%{opacity:.55}}
   .score-pill{display:inline-flex;align-items:center;gap:6px;background:#fff;color:#0B1340;border-radius:8px;padding:4px 14px;font-size:15px;font-weight:900;letter-spacing:.02em;box-shadow:0 2px 8px rgba(0,0,0,.35)}
   .score-pill .sd{color:#6E7994;font-weight:700;font-size:12px}
+  .team.lost{opacity:.4;filter:grayscale(0.7)}
+  .team.lost .nm{font-weight:600}
   .standings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:6px}
   .standings-table{background:rgba(6,11,40,.72);border:1px solid rgba(255,255,255,.07);border-top:3px solid var(--gold);border-radius:14px;overflow:hidden}
   .standings-table-head{display:grid;grid-template-columns:24px 1fr 28px 28px 28px 28px 36px;gap:4px;padding:8px 12px;background:rgba(230,181,73,.08);font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
@@ -975,6 +977,8 @@ function wcApplyScores(){
   document.querySelectorAll(".score-badge, .score-pill-wrap").forEach(function(el){ el.remove(); });
   // Restore any previously-hidden date/time + separators
   document.querySelectorAll(".strip .dt, .strip .sep").forEach(function(el){ el.style.display = ""; });
+  // Un-gray any previously-marked losing sides
+  document.querySelectorAll(".team.lost").forEach(function(el){ el.classList.remove("lost"); });
 
   Object.keys(WC_LIVE.scores).forEach(function(key){
     var parts = key.split("|");
@@ -987,6 +991,14 @@ function wcApplyScores(){
         badge.className = "score-badge ft";
         badge.textContent = "FT";
         card.appendChild(badge);
+
+        // Gray out the losing side (draws leave both untouched)
+        var homeEl = card.querySelector(".team.home");
+        var awayEl = card.querySelector(".team.away");
+        if(homeEl) homeEl.classList.remove("lost");
+        if(awayEl) awayEl.classList.remove("lost");
+        if(d.home > d.away && awayEl){ awayEl.classList.add("lost"); }
+        else if(d.away > d.home && homeEl){ homeEl.classList.add("lost"); }
 
         var strip = card.querySelector(".strip");
         if(strip && !strip.querySelector(".score-pill")){
