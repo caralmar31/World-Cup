@@ -752,9 +752,13 @@ function openModal(mt){
   document.getElementById("modalBody").innerHTML=
     `<div class="spinner"><div class="spinner-ring"></div><span>Fetching match details…</span></div>`;
 
+  // Save scroll position before locking (iOS position:fixed resets scroll to top)
+  var _scrollY = window.scrollY || window.pageYOffset || 0;
+  document.body.dataset.scrollY = _scrollY;
   overlay.classList.add("open");
   document.body.style.overflow="hidden";
   document.body.style.position="fixed";
+  document.body.style.top="-"+_scrollY+"px";
   document.body.style.width="100%";
 
   // Always reset to Match Info tab
@@ -773,9 +777,12 @@ function openModal(mt){
 
 function closeModal(){
   document.getElementById("modalOverlay").classList.remove("open");
+  var _saved = parseInt(document.body.dataset.scrollY || "0", 10);
   document.body.style.overflow="";
   document.body.style.position="";
+  document.body.style.top="";
   document.body.style.width="";
+  window.scrollTo(0, _saved);
 }
 document.getElementById("modalOverlay").addEventListener("click",e=>{
   if(e.target===document.getElementById("modalOverlay")) closeModal();
