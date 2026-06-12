@@ -173,8 +173,10 @@
   @keyframes pulsebadge{0%,100%{opacity:1}50%{opacity:.55}}
   .score-pill{display:inline-flex;align-items:center;gap:6px;background:#fff;color:#0B1340;border-radius:8px;padding:4px 14px;font-size:15px;font-weight:900;letter-spacing:.02em;box-shadow:0 2px 8px rgba(0,0,0,.35)}
   .score-pill .sd{color:#6E7994;font-weight:700;font-size:12px}
-  .team.lost{opacity:.4;filter:grayscale(0.7)}
-  .team.lost .nm{font-weight:600}
+  .team.lost{background:#3a3f4b;filter:grayscale(1)}
+  .team.lost .nm{opacity:.5;color:#cbd0da}
+  .team.lost .flag,.team.lost img{opacity:.4}
+  .team.lost .fav{opacity:.3}
   .standings-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:6px}
   .standings-table{background:rgba(6,11,40,.72);border:1px solid rgba(255,255,255,.07);border-top:3px solid var(--gold);border-radius:14px;overflow:hidden}
   .standings-table-head{display:grid;grid-template-columns:24px 1fr 28px 28px 28px 28px 36px;gap:4px;padding:8px 12px;background:rgba(230,181,73,.08);font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
