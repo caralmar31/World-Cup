@@ -543,10 +543,13 @@ function teamHTML(name,side,favored,slot){
          `<span class="nm">${name}</span>` +
          `${side==='away'?dot:''}</div>`;
 }
-function cardHTML(mt,isSlot){
+function cardHTML(mt,isSlot,showGroup){
   const favH=!isSlot&&mt.fav==='h';
   const favA=!isSlot&&mt.fav==='a';
   const mid=registerMatch(mt);
+  const strip=showGroup
+    ? `<div class="strip"><span class="dt">GRP ${mt.g}</span><span class="sep">·</span><span class="dt">${mt.t} ET</span><span class="sep">·</span><span class="city">${mt.c}</span></div>`
+    : `<div class="strip"><span class="dt">${mt.d} · ${mt.t} ET</span><span class="sep">·</span><span class="city">${mt.c}</span></div>`;
   return `<div class="card" data-mid="${mid}" role="button" tabindex="0" aria-label="View details: ${mt.h} vs ${mt.a}">` +
     (isSlot?`<span class="matchno">Match ${mt.n}</span>`:'') +
     `<div class="vsrow">` +
@@ -554,7 +557,7 @@ function cardHTML(mt,isSlot){
       `<div class="vschip">VS</div>` +
       teamHTML(mt.a,'away',favA,isSlot) +
     `</div>` +
-    `<div class="strip"><span class="dt">${mt.d} · ${mt.t} ET</span><span class="sep">·</span><span class="city">${mt.c}</span></div>` +
+    strip +
   `</div>`;
 }
 
@@ -599,7 +602,7 @@ function renderGroupByDate(){
   for(const day of DATE_ORDER){
     const dm=all.filter(mt=>mt.d===day).sort((a,b)=>tkey(a)-tkey(b));
     if(!dm.length) continue;
-    html+=`<div class="block"><div class="block-head"><span class="datetag">${day}</span><span class="gteams">${dm.length} match${dm.length>1?"es":""} · ET</span></div><div class="grid">${dm.map(mt=>cardHTML(mt,false)).join("")}</div></div>`;
+    html+=`<div class="block"><div class="block-head"><span class="datetag">${day}</span><span class="gteams">${dm.length} match${dm.length>1?"es":""} · ET</span></div><div class="grid">${dm.map(mt=>cardHTML(mt,false,true)).join("")}</div></div>`;
   }
   return html;
 }
