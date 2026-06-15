@@ -242,6 +242,53 @@
   .odds-lbl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
   .odds-note{text-align:center;font-size:10px;color:var(--muted);margin-top:8px;letter-spacing:.04em}
 
+
+  /* ── PAGE NAV ── */
+  .page-nav{display:flex;justify-content:center;gap:0;margin:0 0 32px;border-bottom:2px solid rgba(255,255,255,.08)}
+  .page-tab{background:transparent;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;color:#7681A2;font-family:inherit;font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:14px 28px;cursor:pointer;transition:color .15s,border-color .15s}
+  .page-tab:hover{color:#C9D2EE}
+  .page-tab.active{color:#fff;border-bottom-color:var(--gold)}
+  .page-section{display:none}
+  .page-section.active{display:block}
+
+  /* ── STANDINGS PAGE ── */
+  .standings-page-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:8px}
+  .standings-group-card{background:rgba(6,11,40,.72);border:1px solid rgba(255,255,255,.07);border-top:3px solid var(--gold);border-radius:14px;overflow:hidden}
+  .standings-group-title{font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#0B1340;background:var(--gold);padding:6px 14px;text-align:center}
+  .standings-group-teams{font-size:10px;font-weight:600;letter-spacing:.06em;color:#6B7491;padding:4px 14px 8px;text-align:center;text-transform:uppercase}
+  .st-head{display:grid;grid-template-columns:24px 1fr 32px 32px 32px 32px 40px;gap:2px;padding:7px 14px;background:rgba(230,181,73,.06);font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+  .st-row{display:grid;grid-template-columns:24px 1fr 32px 32px 32px 32px 40px;gap:2px;padding:8px 14px;font-size:12px;color:#D0D8F0;border-top:1px solid rgba(255,255,255,.04);align-items:center;transition:background .12s}
+  .st-row:hover{background:rgba(255,255,255,.04)}
+  .st-row.qualified{border-left:3px solid #4ade80;padding-left:11px}
+  .st-row.third{border-left:3px solid #facc15;padding-left:11px}
+  .st-row.eliminated{border-left:3px solid rgba(255,255,255,.1);padding-left:11px}
+  .st-pos{font-weight:800;color:#6E7994;text-align:center}
+  .st-team{font-weight:700;font-size:11.5px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+  .st-flag{width:18px;height:14px;border-radius:2px;object-fit:cover;flex-shrink:0}
+  .st-num{text-align:center;color:#9AA3C2}
+  .st-pts{text-align:center;font-weight:900;color:#fff;font-size:13px}
+  .st-legend{display:flex;gap:16px;margin:14px 0 4px;flex-wrap:wrap;justify-content:center;font-size:11px;color:#8B93AC}
+  .st-legend span{display:flex;align-items:center;gap:6px}
+  .st-legend i{display:inline-block;width:3px;height:14px;border-radius:2px}
+  .st-note{text-align:center;font-size:10.5px;color:var(--muted);margin-top:8px}
+
+  /* ── BRACKET PAGE ── */
+  .bracket-outer{overflow-x:auto;padding-bottom:16px}
+  .bracket{display:flex;gap:0;align-items:stretch;min-width:900px}
+  .bracket-round{display:flex;flex-direction:column;flex:1;min-width:160px}
+  .bracket-round-title{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);text-align:center;padding:10px 8px 14px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:8px}
+  .bracket-slots{display:flex;flex-direction:column;justify-content:space-around;flex:1;gap:6px;padding:0 6px}
+  .b-match{background:rgba(6,11,40,.72);border:1px solid rgba(255,255,255,.07);border-radius:10px;overflow:hidden;font-size:11px}
+  .b-team{display:flex;align-items:center;gap:7px;padding:7px 10px;color:#D0D8F0;font-weight:700;border-bottom:1px solid rgba(255,255,255,.05);min-height:32px}
+  .b-team:last-child{border-bottom:none}
+  .b-team.tbd{color:#4B5270;font-style:italic;font-weight:500}
+  .b-team.winner{color:#fff;background:rgba(230,181,73,.1)}
+  .b-flag{width:18px;height:13px;border-radius:2px;object-fit:cover;flex-shrink:0}
+  .b-match-label{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:#4B5270;padding:3px 10px;background:rgba(0,0,0,.2);text-align:center}
+  .bracket-connector{display:flex;flex-direction:column;justify-content:space-around;width:16px;flex-shrink:0}
+  .b-note{text-align:center;font-size:10.5px;color:var(--muted);margin:12px 0 4px}
+  @media(max-width:640px){.bracket-round{min-width:130px}.b-team{font-size:10px;padding:5px 7px}}
+
 </style>
 </head>
 <body>
@@ -263,6 +310,14 @@
     <div class="hostline">United States &nbsp;·&nbsp; Canada &nbsp;·&nbsp; Mexico</div>
   </header>
 
+  <!-- Page navigation -->
+  <nav class="page-nav">
+    <button class="page-tab active" onclick="showPage('schedule')">Schedule</button>
+    <button class="page-tab" onclick="showPage('standings')">Standings</button>
+    <button class="page-tab" onclick="showPage('bracket')">Bracket</button>
+  </nav>
+
+  <div id="page-schedule" class="page-section active">
   <div class="controls">
     <div class="legend"><span class="fav-dot"></span> Gold marker = projected favorite &nbsp;·&nbsp; all times ET &nbsp;·&nbsp; click any match for details</div>
     <div class="ctl-right">
@@ -300,6 +355,29 @@
   <footer>
     <span class="fav-dot" style="display:inline-block;vertical-align:middle;margin-right:6px"></span> Gold marker = projected group-stage favorite &nbsp;·&nbsp; All times ET &nbsp;·&nbsp; Click any match for details &nbsp;·&nbsp; Match stats based on pre-tournament data
   </footer>
+  </div><!-- /page-schedule -->
+
+  <!-- ── STANDINGS PAGE ── -->
+  <div id="page-standings" class="page-section">
+    <div class="stage-head" style="margin-top:32px"><h2>Group <span class="ac">Standings</span></h2><div class="rule"></div></div>
+    <div class="st-legend" style="margin-top:16px">
+      <span><i style="background:#4ade80"></i>Qualified (R32)</span>
+      <span><i style="background:#facc15"></i>Best 3rd (potential)</span>
+      <span><i style="background:rgba(255,255,255,.15)"></i>Eliminated</span>
+    </div>
+    <p class="st-note" style="margin-top:6px">Updated automatically from match results · Tiebreaker: Pts → GD → GF</p>
+    <div class="standings-page-grid" id="standingsPageGrid"></div>
+  </div><!-- /page-standings -->
+
+  <!-- ── BRACKET PAGE ── -->
+  <div id="page-bracket" class="page-section">
+    <div class="stage-head" style="margin-top:32px"><h2>Projected <span class="ac">Bracket</span></h2><div class="rule"></div></div>
+    <p class="st-note" style="margin-top:6px">Based on current standings · 3rd-place slots confirmed after group stage ends</p>
+    <div class="bracket-outer" style="margin-top:20px">
+      <div class="bracket" id="bracketWrap"></div>
+    </div>
+  </div><!-- /page-bracket -->
+
 </div>
 
 <!-- MODAL -->
@@ -658,6 +736,8 @@ function setTeam(t){teamFilter=t;render();}
 })();
 document.getElementById("knockout").innerHTML=renderKnockout();
 render();
+renderStandingsPage();
+renderBracketPage();
 
 /* ===================== EVENT DELEGATION ===================== */
 // One listener on the document; look up match data from MATCH_REGISTRY by data-mid.
@@ -1050,6 +1130,192 @@ try{
     if(_wcNow >= _wcS && _wcNow <= _wcE){ setInterval(fetchLiveScores, 300000); }
   }
 }catch(e){ /* never let live scores break the site */ }
+
+
+/* ===================== STANDINGS + BRACKET PAGES ===================== */
+
+// ── showPage() nav controller ─────────────────────────────────────────
+function showPage(page){
+  document.querySelectorAll(".page-section").forEach(function(s){ s.classList.remove("active"); });
+  document.querySelectorAll(".page-tab").forEach(function(t){ t.classList.remove("active"); });
+  document.getElementById("page-"+page).classList.add("active");
+  document.querySelectorAll(".page-tab").forEach(function(t){
+    if(t.textContent.toLowerCase().trim() === page || t.getAttribute("onclick").includes("'"+page+"'"))
+      t.classList.add("active");
+  });
+  if(page === "standings"){ renderStandingsPage(); }
+  if(page === "bracket"){ renderBracketPage(); }
+}
+
+// ── Compute standings from openfootball scores ────────────────────────
+function computeStandings(){
+  // Build from match data (canonical team names match flags, rosters, scores)
+  var table = {};
+  Object.keys(groups).forEach(function(g){
+    var seen = [];
+    groups[g].m.forEach(function(mt){
+      if(seen.indexOf(mt.h)===-1) seen.push(mt.h);
+      if(seen.indexOf(mt.a)===-1) seen.push(mt.a);
+    });
+    table[g] = seen.map(function(name){
+      return {team:name, p:0, w:0, d:0, l:0, gf:0, ga:0, pts:0};
+    });
+  });
+
+  // Apply scores from WC_LIVE.scores (openfootball FT results)
+  var _scores = (typeof WC_LIVE !== "undefined" && WC_LIVE.scores) ? WC_LIVE.scores : {};
+  Object.keys(_scores).forEach(function(key){
+    var parts = key.split("|"), ht = parts[0], at = parts[1];
+    var sc = _scores[key];
+    var hg = sc.home, ag = sc.away;
+    // Find which group this match belongs to
+    Object.keys(groups).forEach(function(g){
+      groups[g].m.forEach(function(mt){
+        if(mt.h === ht && mt.a === at){
+          var hRow = table[g].find(function(r){ return r.team===ht; });
+          var aRow = table[g].find(function(r){ return r.team===at; });
+          if(!hRow || !aRow) return;
+          hRow.p++; aRow.p++;
+          hRow.gf+=hg; hRow.ga+=ag;
+          aRow.gf+=ag; aRow.ga+=hg;
+          if(hg > ag){ hRow.w++; hRow.pts+=3; aRow.l++; }
+          else if(ag > hg){ aRow.w++; aRow.pts+=3; hRow.l++; }
+          else { hRow.d++; aRow.d++; hRow.pts++; aRow.pts++; }
+        }
+      });
+    });
+  });
+
+  // Sort each group: pts → gd → gf
+  Object.keys(table).forEach(function(g){
+    table[g].sort(function(a,b){
+      if(b.pts!==a.pts) return b.pts-a.pts;
+      var bgd=(b.gf-b.ga), agd=(a.gf-a.ga);
+      if(bgd!==agd) return bgd-agd;
+      return b.gf-a.gf;
+    });
+  });
+  return table;
+}
+
+// ── Render standings page ─────────────────────────────────────────────
+function renderStandingsPage(){
+  var table = computeStandings();
+  var grid = document.getElementById("standingsPageGrid");
+  if(!grid) return;
+  var html = "";
+  var groupOrder = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+  groupOrder.forEach(function(g){
+    if(!table[g]) return;
+    var rows = table[g];
+    var groupTeams = groups[g] ? groups[g].teams : "";
+    html += '<div class="standings-group-card">';
+    html += '<div class="standings-group-title">Group ' + g + '</div>';
+    html += '<div class="st-head"><span>#</span><span>Team</span><span>P</span><span>W</span><span>D</span><span>L</span><span>Pts</span></div>';
+    rows.forEach(function(r, i){
+      var gd = r.gf - r.ga;
+      var rowCls = i < 2 ? "st-row qualified" : i === 2 ? "st-row third" : "st-row eliminated";
+      var code = flagCodes[r.team] || "";
+      var fImg = code ? '<img src="https://raw.githubusercontent.com/lipis/flag-icons/main/flags/4x3/'+code+'.svg" class="st-flag" alt="">' : "";
+      html += '<div class="' + rowCls + '">';
+      html += '<span class="st-pos">' + (i+1) + '</span>';
+      html += '<span class="st-team">' + fImg + r.team + '</span>';
+      html += '<span class="st-num">' + r.p + '</span>';
+      html += '<span class="st-num">' + r.w + '</span>';
+      html += '<span class="st-num">' + r.d + '</span>';
+      html += '<span class="st-num">' + r.l + '</span>';
+      html += '<span class="st-pts">' + r.pts + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+// Bracket data is defined inside renderBracketPage()
+
+function resolveKey(key, standings){
+  if(!key) return null;
+  if(key.startsWith("W_")){
+    var g = key.slice(2);
+    return standings[g] && standings[g][0] ? standings[g][0].team : null;
+  }
+  if(key.startsWith("R_")){
+    var g = key.slice(2);
+    return standings[g] && standings[g][1] ? standings[g][1].team : null;
+  }
+  if(key.startsWith("T3_")){
+    return "Best 3rd (" + key.slice(3).split("").join("/") + ")";
+  }
+  return key;
+}
+
+function bTeam(name){
+  var isTbd = !name || name.startsWith("Best 3rd") || name.startsWith("W match") || name.startsWith("TBD");
+  var code = name && flagCodes[name] ? flagCodes[name] : null;
+  var fImg = code ? '<img src="https://raw.githubusercontent.com/lipis/flag-icons/main/flags/4x3/'+code+'.svg" class="b-flag" alt="">' : '<span style="width:18px"></span>';
+  return '<div class="b-team' + (isTbd ? " tbd" : "") + '">' + (isTbd ? "" : fImg) + (name || "TBD") + '</div>';
+}
+
+function renderBracketPage(){
+  var standings = computeStandings();
+  var wrap = document.getElementById("bracketWrap");
+  if(!wrap) return;
+
+  // R32 fixed matchups (FIFA official schedule)
+  var R32 = [
+    [73,"R_A","R_B"],[74,"W_E","T3_ABCDF"],[75,"W_F","R_C"],[76,"W_C","R_F"],
+    [77,"W_I","T3_CDFGH"],[78,"R_E","R_I"],[79,"W_A","T3_CEFHI"],[80,"W_L","T3_EHIJK"],
+    [81,"W_D","T3_BEFIJ"],[82,"W_G","T3_AEHIJ"],[83,"R_K","R_L"],[84,"W_H","R_J"],
+    [85,"W_B","T3_EFGIJ"],[86,"W_J","R_H"],[87,"W_K","T3_DEIJL"],[88,"R_D","R_G"]
+  ];
+  var R16 = [[89,73,74],[90,75,76],[91,77,78],[92,79,80],[93,81,82],[94,83,84],[95,85,86],[96,87,88]];
+  var QF  = [[97,89,90],[98,91,92],[99,93,94],[100,95,96]];
+  var SF  = [[101,97,98],[102,99,100]];
+  var FINAL = [[104,101,102]];
+
+  // Build match result map for R32 → resolve subsequent rounds
+  var matchWinners = {};
+
+  // Resolve R32
+  R32.forEach(function(m){
+    var no = m[0], hk = m[1], ak = m[2];
+    var h = resolveKey(hk, standings);
+    var a = resolveKey(ak, standings);
+    matchWinners[no] = null; // unknown until played
+  });
+
+  function roundHtml(matches, title){
+    var h = '<div class="bracket-round"><div class="bracket-round-title">'+title+'</div><div class="bracket-slots">';
+    matches.forEach(function(m){
+      var no = m[0];
+      var home, away;
+      if(m.length === 3 && typeof m[1] === "string"){
+        // R32 — resolve from standings keys
+        home = resolveKey(m[1], standings);
+        away = resolveKey(m[2], standings);
+      } else {
+        // Later rounds — resolve from match winner keys
+        home = "W Match " + m[1];
+        away = "W Match " + m[2];
+      }
+      h += '<div class="b-match">';
+      h += '<div class="b-match-label">Match ' + no + '</div>';
+      h += bTeam(home);
+      h += bTeam(away);
+      h += '</div>';
+    });
+    h += '</div></div>';
+    return h;
+  }
+
+  wrap.innerHTML =
+    roundHtml(R32,   "Round of 32") +
+    roundHtml(R16,   "Round of 16") +
+    roundHtml(QF,    "Quarter-Finals") +
+    roundHtml(SF,    "Semi-Finals") +
+    roundHtml(FINAL, "Final");
+}
 
 </script>
 </body>
